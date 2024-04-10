@@ -64,18 +64,22 @@ class Store(object):
         format: Literal["", "json"],
     ) -> int:
         async with aiosqlite.connect(self.db_path) as connection:
-            res: list[tuple[int]] = await chat_queries.save_chat(  # type: ignore
-                connection,
-                id=id,
-                name=name,
-                model=model,
-                context=context,
-                system=system,
-                format=format,
+            cursor = await connection.execute(
+                """
+                INSERT OR REPLACE INTO chat(id, name, model, context, system, format) 
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                (id, name, model, context, system, format)
             )
-
             await connection.commit()
-            return res[0][0]
+            # If the id is None (autoincrement assumed), fetch the last row id inserted.
+            if id is None:
+                last_row_id = cursor.lastrowid
+            else:
+                # If an id was provided, use it as it's an insert or replace.
+                last_row_id = id
+            await cursor.close()
+            return last_row_id
 
     async def save_context(self, id: int, context: str) -> None:
         async with aiosqlite.connect(self.db_path) as connection:

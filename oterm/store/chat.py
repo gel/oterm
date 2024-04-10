@@ -1,9 +1,6 @@
 import aiosql
 
 chat_sqlite = """
--- name: save_chat
-INSERT OR REPLACE INTO chat(id, name, model, context, system, format) 
-VALUES(:id, :name, :model, :context, :system, :format) RETURNING id;
 -- name: save_context
 UPDATE chat SET context = :context WHERE id = :id;
 -- name: rename_chat
